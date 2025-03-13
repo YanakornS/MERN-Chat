@@ -54,12 +54,13 @@ export const signin = async (req, res) => {
       res.status(400).json({ message: "User not found" });
     }
 
-    const passwordIsValid = bcrypt.compareSync(password, user.password);
+    const passwordIsValid = bcrypt.compare(password, user.password);
     if (!passwordIsValid) {
       return res.status(401).send({
         message: "Invalid password!",
       });
     }
+    generateToken(user._id, res);
     res.status(200).json({
       _id: user._id,
       fullName: user.fullName,
@@ -77,31 +78,42 @@ export const logout = async (req, res) => {
     res.status(200).json({ message: "Logout Success" });
   } catch (error) {}
 };
-
 export const updateProfile = async (req, res) => {
-  //   const { id: userId } = req.params;
-
   try {
     const { profilePic } = req.body;
     const userId = req.user._id;
+    // const { id: userId } = req.params;
 
     if (!profilePic) {
-      return res.status(400).json({ message: "Profile Picture is required" });
+      return res.status(400).json({ message: "Profile picture is required" });
     }
-
     const uploadResponse = await cloudinary.uploader.upload(profilePic);
-    const updateUser = await User.findByIdAndUpdate(
+    if (!uploadResponse) {
+      return res
+        .status(500)
+        .json({ message: "Error while uploading profile picture" });
+    }
+    const updatedUser = await User.findByIdAndUpdate(
       userId,
       { profilePic: uploadResponse.secure_url },
       { new: true }
     );
-
-    if (updateUser) {
-      res.status(200).json(updateUser);
+    if (updatedUser) {
+      res.status(200).json(updatedUser);
     } else {
-      res.status(500).json({ message: "Error while Updating profile picture" });
+      res.status(500).json({ message: "Error while updating profile picture" });
     }
   } catch (error) {
-    res.status(500).json({ message: "Internal Server Error While Update" });
+    res.status(500).json({ message: "Internal server error While Updating" });
+  }
+};
+
+export const checkAuth = async (req, res) => {
+  try {
+    res.status(200).json(req.user);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Internal Server Error while checking Auth" });
   }
 };

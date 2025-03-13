@@ -16,7 +16,5 @@ export const generateToken = (userId, res) => {
     secure: node_mode !== "development",
   });
 
-  console.log("Token Generated ans cookie set", token);
-
   return token;
 };
