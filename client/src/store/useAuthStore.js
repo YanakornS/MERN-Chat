@@ -2,6 +2,7 @@ import { create } from "zustand";
 import api from "../services/api.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
+import { useChatStore } from "./useChatStore.js";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -11,7 +12,6 @@ export const useAuthStore = create((set, get) => ({
   isLoggingIn: false,
   isUpdatingProfile: false,
   onlineUsers: [],
-
   checkAuth: async () => {
     try {
       const res = await api.get("/auth/check");
@@ -87,8 +87,31 @@ export const useAuthStore = create((set, get) => ({
     newSocket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
     });
-  },
+    newSocket.on("friendRequestReceived", (friendId) => {
+      const selectedUser = useChatStore.getState().selectedUser;
 
+      if (friendId === selectedUser._id) {
+        useChatStore.getState().setFriendRequestReceived(true);
+        console.log("Friend ", selectedUser);
+      }
+    });
+    newSocket.on("friendRequestSent", (friendId) => {
+      const selectedUser = useChatStore.getState().selectedUser;
+      console.log("friendRequestSent", selectedUser._id);
+      if (friendId === selectedUser._id) {
+        useChatStore.getState().setFriendRequestReceived(false);
+      }
+    });
+    newSocket.on("friendRequestAccepted", (friendId) => {
+      const selectedUser = useChatStore.getState().selectedUser;
+
+      if (friendId === selectedUser._id) {
+        useChatStore.getState().setFriendRequestReceived(false);
+        useChatStore.getState().setFriendRequestSent(false);
+        useChatStore.getState().setIsFriend(true);
+      }
+    });
+  },
   disconnectSocket: () => {
     const { socket } = get();
     if (socket?.connected) {

@@ -6,13 +6,18 @@ import { connectDB } from "./lib/db.js";
 import authRouter from "./routers/auth.router.js";
 import { app, server } from "./lib/socket.js";
 import messageRouter from "./routers/message.router.js";
+import friendRouter from "./routers/friend.router.js";
 
 dotenv.config();
 
 const POST = process.env.PORT;
 const FRONTEND_URL = process.env.FRONTEND_URL;
 
-app.use(express.json());
+app.use(
+  express.json({
+    limit: "50mb",
+  })
+);
 app.use(cookieParser());
 app.use(
   cors({
@@ -27,6 +32,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/message", messageRouter);
+app.use("/api/v1/friend", friendRouter);
 
 server.listen(POST, () => {
   console.log("Server is running on http://localhost:" + POST);
